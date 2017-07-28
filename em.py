@@ -4,7 +4,7 @@ from collections import defaultdict
 from fusion_utils import invert
 
 
-def expectation_maximization(N, M, Psi, acc_prior):
+def expectation_maximization(N, M, Psi):
     """
     The expectation maximization method (EM) from Dong et al., 2013. It iteratively estimates the probs of objects, then
     the accuracies of sources until a convergence is reached.

@@ -132,138 +132,65 @@ def run_task_criteria():
 def postProc_algorithm():
     trusts_trsh = 1.
     cheaters_prop = 0.3
-    n_papers = 900
-    quiz_papers_n = 5
+    n_papers = 1000
     papers_page = 10
     theta_params = np.arange(0.1, 1, 0.1)
-    # theta_params = [0.1, 0.5, 0.9]
-    # cost_params = range(1, 10)
     cost = 10
-
-    # print 'theta: {}'.format(theta)
-    # loss_real_dict = {0:[], 1:[], 2:[], 3:[], 4:[]}
-    # for i in range(100):
+    quiz_papers_n = 5
     data = []
-    # for theta in theta_params:
-    for theta in [0.8, 0.9]:
-        print 'theta: {}'.format(theta)
-        # for cost in cost_params:
-        for J in [5]:
-            print 'J: {}'.format(J)
+    for J in [5, 10]:
+        for theta in theta_params:
+            print 'Theta: {}, J: {}, CR: {}'.format(theta, J, cost)
             Jt_mv = J / 2 + 1
-            # print 'cost: {}'.format(cost)
-            theta_mv_list = []
-            theta_em_list = []
-            Jt_mv_list = []
-            Jt_em_list = []
             loss_mv = []
-            loss_mv_theta = []
-            loss_em = []
-            acc_em_list = []
-            loss_clmv = []
+            loss_scr = []  # mv + cost ratio
+            loss_bpe = []  # mv + theta estimation
+            loss_eme = []  # em estimation
             for _ in range(30):
                 user_prop, user_population, acc_distribution = run_quiz_scope(trusts_trsh, quiz_papers_n,
                                                                               cheaters_prop, 0.0)
                 GT, psi_obj, psi_w = synthesize(acc_distribution, n_papers, papers_page, J, theta)
                 # MV estimation
                 agg_values, theta_mv = classifier(psi_obj, Jt_mv)
-                acc_mv = estimate_accuracy(agg_values, psi_w)
-                # acc_mv_avg = np.mean(acc_mv)
-                # loss_mv.append(get_loss(GT, psi_obj, cost, Jt_mv))
-                # # Class func: MV theta=0.5
-                # Nt = quiz_papers_n
-                # z = cheaters_prop
-                # Zs = (z * 0.5 ** Nt) / (z * 0.5 ** Nt + (2. * (1 - z) / (Nt + 1)) * (1 - 1. / (2 ** Nt + 1)))
-                # acc_tw_avg = 2 ** (Nt + 1) * (Nt + 1) * (1 - 0.5 ** (Nt + 2)) / ((2 ** (Nt + 1) - 1) * (Nt + 2))
-                # acc_avg = Zs * 0.5 + (1 - Zs) * acc_tw_avg
-                # Jt_mv_theta = find_jt(0.5, J, acc_avg, cost)
-                # loss_mv_theta.append(get_loss(GT, psi_obj, cost, Jt_mv_theta))
-                # print 'Jt_mv_theta: {}'.format(Jt_mv_theta[0])
-                # print 'loss: {}'.format(loss_mv_theta)
-                # # Class func: MV
-                # Jt_mv_opt = find_jt(theta_mv, J, acc_mv_avg, cost)
-                # loss_clmv.append(get_loss(GT, psi_obj, cost, Jt_mv_opt))
-                # theta_mv_list.append(theta_mv)
-                # Jt_mv_list.append(Jt_mv_opt)
+                loss_mv.append(get_loss(GT, psi_obj, cost, Jt_mv))
 
-                # Class func: EM
+                # Class func: SCE, theta = 0.5
+                Nt = quiz_papers_n
+                z = cheaters_prop
+                Zs = (z * 0.5 ** Nt) / (z * 0.5 ** Nt + (2. * (1 - z) / (Nt + 1)) * (1 - 1. / (2 ** Nt + 1)))
+                acc_tw_avg = 2 ** (Nt + 1) * (Nt + 1) * (1 - 0.5 ** (Nt + 2)) / ((2 ** (Nt + 1) - 1) * (Nt + 2))
+                acc_scr_avg = Zs * 0.5 + (1 - Zs) * acc_tw_avg
+                Jt_scr = find_jt(0.5, J, acc_scr_avg, cost)
+                loss_scr.append(get_loss(GT, psi_obj, cost, Jt_scr))
+
+                # Class func: BPE
+                acc_mv = estimate_accuracy(agg_values, psi_w)
+                acc_mv_avg = np.mean(acc_mv)
+                Jt_bpe = find_jt(theta_mv, J, acc_mv_avg, cost)[0]
+                loss_bpe.append(get_loss(GT, psi_obj, cost, Jt_bpe))
+
+                # Class func: EME
                 Psi = input_adapter(psi_w, n_papers)
-                acc_em, em_p = expectation_maximization(len(psi_w), n_papers, Psi, acc_mv)
+                acc_em, em_p = expectation_maximization(len(psi_w), n_papers, Psi)
                 theta_em = get_theta(em_p)
                 acc_em_avg = np.mean(acc_em)
-                acc_em_list.append(acc_em_avg)
-                # agg_em = prob_binary_convert(em_p)
-                # theta_em = sum(agg_em) / float(len(agg_em))
-                Jt_em = find_jt(theta_em, J, acc_em_avg, cost)
-                loss_em.append(get_loss(GT, psi_obj, cost, Jt_em))
-                theta_em_list.append(theta_em)
-                # Jt_em_list.append(Jt_em)
-            print 'losss: {}'.format(np.mean(loss_em))
+                Jt_em = find_jt(theta_em, J, acc_em_avg, cost)[0]
+                loss_eme.append(get_loss(GT, psi_obj, cost, Jt_em))
 
+            print 'LOSS   mv: {:1.2f}, scr: {:1.2f}, bpe: {:1.2f}, eme: {:1.2f}'.\
+                format(np.mean(loss_mv), np.mean(loss_scr), np.mean(loss_bpe), np.mean(loss_eme))
+            print 'SRD    mv: {:1.2f}, scr: {:1.2f}, bpe: {:1.2f}, eme: {:1.2f}'. \
+                format(np.std(loss_mv), np.std(loss_scr), np.std(loss_bpe), np.std(loss_eme))
+            print '--------------------------'
 
-    #
-    #         data.append([theta, np.mean(loss_em),
-    #                      np.mean(theta_em), np.mean(acc_em_list),
-    #                      ])
-    # df = pd.DataFrame(data, columns=['theta', 'loss', 'theta', 'acc'])
-    # df.to_csv('visualisation/data/round1_theta.csv', index=False)
+            data.append([theta, J, quiz_papers_n, cost, cheaters_prop, papers_page,
+                         np.mean(loss_mv), np.mean(loss_scr), np.mean(loss_bpe), np.mean(loss_eme),
+                         np.std(loss_mv), np.std(loss_scr), np.std(loss_bpe), np.std(loss_eme)])
 
-            # data.append([theta, np.mean(theta_mv_list), np.std(theta_mv_list),
-            #              np.mean(theta_em_list), np.std(theta_em_list),
-            #              J, np.mean(Jt_mv_list), np.std(Jt_mv_list),
-            #              np.mean(Jt_em_list), np.std(Jt_em_list), cost,
-            #              np.mean(loss_clmv), np.std(loss_clmv),
-            #              np.mean(loss_mv), np.std(loss_mv),
-            #              np.mean(loss_em), np.std(loss_em),
-            #              np.mean(loss_mv_theta), np.std(loss_mv_theta)])
-    # df = pd.DataFrame(data, columns=['theta', 'theta_mv_avg', 'theta_mv_std',
-    #                                  'theta_em_avg', 'theta_em_std',
-    #                                  'J', 'Jt_mv_avg', 'Jt_mv_std',
-    #                                  'Jt_em_avg', 'Jt_em_std', 'cost',
-    #                                  'loss_clmv_avg', 'loss_clmv_std',
-    #                                  'loss_mv_avg', 'loss_mv_std',
-    #                                  'loss_em_avg', 'loss_em_std', 'loss_mv_theta'])
-    # df.to_csv('visualisation/data/loss_theta_test.csv', index=False)
-    # df = pd.DataFrame(data, columns=['theta', 'theta_mv_avg', 'theta_mv_std',
-    #                                  'theta_em_avg', 'theta_em_std',
-    #                                  'J', 'Jt_mv_avg', 'Jt_mv_std',
-    #                                  'Jt_em_avg', 'Jt_em_std', 'cost',
-    #                                  'loss1_avg', 'loss1_std',
-    #                                  'loss_avg', 'loss_std',
-    #                                  'loss2_avg', 'loss2_std',
-    #                                  'loss3_avg', 'loss3_std'])
-    # df.to_csv('visualisation/data/loss_theta_mv22.csv', index=False)
-    #
-    # df = pd.DataFrame(data, columns=['theta', 'theta_mv_avg', 'theta_mv_std',
-    #                                  'theta_em_avg', 'theta_em_std',
-    #                                  'J', 'Jt_mv_avg', 'Jt_mv_std',
-    #                                  'Jt_em_avg', 'Jt_em_std', 'cost',
-    #                                  'loss_avg', 'loss_std',
-    #                                  'loss1_avg', 'loss1_std',
-    #                                  'loss2_avg', 'loss2_std',
-    #                                  'loss3_avg', 'loss3_std'])
-    # df.to_csv('visualisation/data/loss_theta_clmv22.csv', index=False)
-    #
-    # df = pd.DataFrame(data, columns=['theta', 'theta_mv_avg', 'theta_mv_std',
-    #                                  'theta_em_avg', 'theta_em_std',
-    #                                  'J', 'Jt_mv_avg', 'Jt_mv_std',
-    #                                  'Jt_em_avg', 'Jt_em_std', 'cost',
-    #                                  'loss1_avg', 'loss1_std',
-    #                                  'loss2_avg', 'loss2_std',
-    #                                  'loss_avg', 'loss_std',
-    #                                  'loss3_avg', 'loss3_std'])
-    # df.to_csv('visualisation/data/loss_theta_em22.csv', index=False)
-    #
-    # df = pd.DataFrame(data, columns=['theta', 'theta_mv_avg', 'theta_mv_std',
-    #                                  'theta_em_avg', 'theta_em_std',
-    #                                  'J', 'Jt_mv_avg', 'Jt_mv_std',
-    #                                  'Jt_em_avg', 'Jt_em_std', 'cost',
-    #                                  'loss1_avg', 'loss1_std',
-    #                                  'loss2_avg', 'loss2_std',
-    #                                  'loss3_avg', 'loss3_std',
-    #                                  'loss_avg', 'loss_std'])
-    # df.to_csv('visualisation/data/loss_theta_mvt22.csv', index=False)
-
+    df = pd.DataFrame(data, columns=['theta', 'J', 'Nt', 'CR', 'z', 'papers_page',
+                                     'loss_mv', 'loss_scr', 'loss_bpe', 'loss_eme',
+                                     'std_mv', 'std_std', 'std_bpe', 'std_eme'])
+    df.to_csv('visualisation/data/loss_theta_cr10.csv', index=False)
 
 
 if __name__ == '__main__':
