@@ -154,13 +154,13 @@ def postProc_algorithm():
                 agg_values, theta_mv = classifier(psi_obj, Jt_mv)
                 loss_mv.append(get_loss(GT, psi_obj, cost, Jt_mv))
 
-                # Class func: SCE, theta = 0.5
+                # Class func: SCR, theta = 0.5
                 Nt = quiz_papers_n
                 z = cheaters_prop
                 Zs = (z * 0.5 ** Nt) / (z * 0.5 ** Nt + (2. * (1 - z) / (Nt + 1)) * (1 - 1. / (2 ** Nt + 1)))
                 acc_tw_avg = 2 ** (Nt + 1) * (Nt + 1) * (1 - 0.5 ** (Nt + 2)) / ((2 ** (Nt + 1) - 1) * (Nt + 2))
                 acc_scr_avg = Zs * 0.5 + (1 - Zs) * acc_tw_avg
-                Jt_scr = find_jt(0.5, J, acc_scr_avg, cost)
+                Jt_scr = find_jt(0.5, J, acc_scr_avg, cost)[0]
                 loss_scr.append(get_loss(GT, psi_obj, cost, Jt_scr))
 
                 # Class func: BPE
@@ -189,8 +189,8 @@ def postProc_algorithm():
 
     df = pd.DataFrame(data, columns=['theta', 'J', 'Nt', 'CR', 'z', 'papers_page',
                                      'loss_mv', 'loss_scr', 'loss_bpe', 'loss_eme',
-                                     'std_mv', 'std_std', 'std_bpe', 'std_eme'])
-    df.to_csv('visualisation/data/loss_theta_cr10.csv', index=False)
+                                     'std_mv', 'std_scr', 'std_bpe', 'std_eme'])
+    df.to_csv('visualisation/data/loss_theta_cr10_p1000.csv', index=False)
 
 
 if __name__ == '__main__':
