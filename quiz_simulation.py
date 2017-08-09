@@ -18,8 +18,8 @@ def do_quiz_scope(trust_min, quiz_papers_n, cheaters_prop, easy_add_val):
             worker_accuracy = 0.6
     else:
         worker_type = 'worker'
-        worker_accuracy = 0.5 + (np.random.beta(1, 1) * 0.5)
-        # worker_accuracy = np.random.uniform(0.5, 0.7)
+        # worker_accuracy = 0.5 + (np.random.beta(1, 1) * 0.5)
+        worker_accuracy = np.random.uniform(0.5, 0.7)
 
     for paper_id in range(quiz_papers_n):
         # decide if paper in/out of scope

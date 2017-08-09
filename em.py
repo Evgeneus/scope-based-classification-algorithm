@@ -2,6 +2,7 @@ import numpy as np
 import math
 from collections import defaultdict
 from fusion_utils import invert
+from mv import majority_voting
 
 
 def expectation_maximization(N, M, Psi):
@@ -16,11 +17,14 @@ def expectation_maximization(N, M, Psi):
     """
     inv_Psi = invert(N, M, Psi)
     # convergence eps
-    eps = 0.01
+    eps = 0.001
+    it_max = 50
 
-    # init accuracies
-    A = [0.8 for s in range(N)]
-    it = 1
+    # init iteration
+    p = majority_voting(Psi)
+    A = [np.average([p[obj][val] for obj, val in x]) for x in inv_Psi]
+
+    it = 2
     while True:
         # E-step
         p = []
@@ -41,12 +45,12 @@ def expectation_maximization(N, M, Psi):
                 for v in C.keys():
                     if v == val:
                         if A[s] == 0.:
-                            A[s] = 0.5
+                            A[s] = 0.01
                             C[v] += math.log(A[s])
 
                     else:
                         if A[s] == 1.:
-                            A[s] = 0.95
+                            A[s] = 0.99
                         C[v] += math.log((1-A[s])/(V-1))
 
             # compute probs
@@ -62,14 +66,14 @@ def expectation_maximization(N, M, Psi):
         A_new = [np.average([p[obj][val] for obj, val in x]) for x in inv_Psi]
 
         # convergence check
-        if sum(abs(np.subtract(A, A_new))) < eps:
+        if sum(abs(np.subtract(A, A_new)))/len(A) < eps:
             A = A_new
             break
         else:
             A = A_new
 
         it += 1
-        if it >= 10:
+        if it >= it_max:
             return A, p
 
     return A, p

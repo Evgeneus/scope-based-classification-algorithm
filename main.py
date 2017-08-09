@@ -138,10 +138,13 @@ def postProc_algorithm():
     cost = 10
     quiz_papers_n = 5
     data = []
-    for J in [5, 10]:
+    for J in [5]:
         for theta in theta_params:
             print 'Theta: {}, J: {}, CR: {}'.format(theta, J, cost)
-            Jt_mv = J / 2 + 1
+            if J % 2:
+                Jt_mv = J / 2 + 1
+            else:
+                Jt_mv = J / 2
             loss_mv = []
             loss_scr = []  # mv + cost ratio
             loss_bpe = []  # mv + theta estimation
@@ -190,16 +193,16 @@ def postProc_algorithm():
     df = pd.DataFrame(data, columns=['theta', 'J', 'Nt', 'CR', 'z', 'papers_page',
                                      'loss_mv', 'loss_scr', 'loss_bpe', 'loss_eme',
                                      'std_mv', 'std_scr', 'std_bpe', 'std_eme'])
-    df.to_csv('visualisation/data/loss_theta_cr10_p1000.csv', index=False)
+    df.to_csv('visualisation/data/loss_theta_cr10_p1000_b.csv', index=False)
 
 
 if __name__ == '__main__':
-    postProc_algorithm()
-    # trusts_trsh = 1.
-    # cheaters_prop = 0.3
-    # easy_add_acc = 0.0
-    # n_papers = 500
-    #
-    # for quiz_papers_n in range(1, 11, 1):
-    #     user_prop, user_population, acc_distr = run_quiz_scope(trusts_trsh, quiz_papers_n, cheaters_prop, easy_add_acc)
-    #     d_item = run_task_scope(trusts_trsh, user_prop, user_population, easy_add_acc, n_papers, quiz_papers_n)
+    # postProc_algorithm()
+    trusts_trsh = 1.
+    cheaters_prop = 0.3
+    easy_add_acc = 0.0
+    n_papers = 500
+
+    for quiz_papers_n in range(1, 11, 1):
+        user_prop, user_population, acc_distr = run_quiz_scope(trusts_trsh, quiz_papers_n, cheaters_prop, easy_add_acc)
+        d_item = run_task_scope(trusts_trsh, user_prop, user_population, easy_add_acc, n_papers, quiz_papers_n)
