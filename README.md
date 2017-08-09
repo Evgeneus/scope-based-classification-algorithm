@@ -1,2 +1,6 @@
-# in-out-tagging-algorithm
-Modelling of tagging scientific papers by crowd users for the literature review purpose.
+##Crowdsourcing Paper Screening in Systematic Literature Reviews (HCOMP 2017)
+###Evgeny Krivosheev, Fabio Casati, Valentina Caforio, Boualem Benatallah
+
+## Avstract
+Literature reviews allow scientists to stand on the shoulders of giants, showing promising directions, summarizing progress, and pointing out existing challenges in research. At the same time conducting a systematic literature review is a laborious and consequently expensive process. In the last decade, there have been several studies on crowdsourcing in literature reviews. This paper explores the feasibility of crowdsourcing for facilitating the literature review process in terms of results, time and effort, and identifies which crowdsourcing strategies provide the best results based on the budget available.
+In particular we focus on the screening phase of the literature review process and we contribute and assess strategies for running crowdsourcing tasks that are efficient in terms of budget and classification error. Finally, we present our findings based on experiments run on Crowdflower.
